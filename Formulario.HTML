@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulário de Registro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<style>
+  body { margin:0; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; display:flex; height:100vh; background-color:#eef2f7; color:#333; }
+  .form-section { width:35%; background-color:#fff; padding:20px; border-right:3px solid #4169e1; box-sizing:border-box; display:flex; flex-direction:column; }
+  .records-section { width:65%; padding:20px; overflow-y:auto; box-sizing:border-box; display:flex; flex-direction:column; }
+  h2 { text-align:center; color:#4169e1; margin-bottom:15px; font-size:1.2em; }
+  label { display:block; font-weight:600; margin-top:10px; font-size:0.9em; }
+  input, select, textarea, button { width:100%; padding:7px; margin-top:5px; border-radius:5px; border:1px solid #aaa; font-size:0.9em; box-sizing:border-box; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:#4169e1; box-shadow:0 0 3px #4169e1; }
+  button { background-color:#4169e1; color:white; border:none; cursor:pointer; margin-top:10px; transition:0.2s; }
+  button:hover { background-color:#1e3ea1; }
+  .checkbox-group { display:none; flex-direction:column; margin-top:5px; }
+  .checkbox-group label { font-weight:normal; }
+  .registro-item { display:flex; justify-content:space-between; padding:5px 8px; border-bottom:1px solid #ccc; font-size:0.85em; align-items:center; }
+  #contadorCaixas, #contadorPorTipo { margin-top:10px; font-weight:bold; color:#1e3ea1; text-align:right; font-size:0.9em; }
+  #mensagem { color:green; font-weight:bold; text-align:center; margin-top:5px; font-size:0.85em; }
+  #todosRegistros { margin-top:10px; font-size:0.85em; border-top:1px solid #ccc; max-height:400px; overflow-y:auto; }
+  #relogio { text-align:center; font-weight:bold; margin-bottom:10px; color:#4169e1; }
+</style>
+</head>
+<body>
+
+<div class="form-section">
+  <h2>Formulário</h2>
+  <div id="relogio"></div>
+  <form id="registroForm">
+    <label>Descrição</label>
+    <select id="descricao">
+      <option value="">Selecione...</option>
+      <option value="PRONTUARIO">PRONTUÁRIO MÉDICO - PLANILHA</option>
+      <option value="FURG">FICHAS DE URGÊNCIA - DIA</option>
+      <option value="FEME">FICHAS DE EMERGÊNCIA - DIA</option>
+      <option value="EXAMB">EXAMES AMBULATORIAL</option>
+      <option value="EXAMEXT">EXAMES EXTERNOS</option>
+      <option value="HDIA">HOSP. DIA</option>
+      <option value="EELE">ELETIVAS ENCERRADAS</option>
+      <option value="NS">N/S</option>
+    </select>
+
+    <div class="checkbox-group" id="checkboxExames">
+      <label><input type="checkbox" value="TOMOGRAFIA"> Tomografia</label>
+      <label><input type="checkbox" value="COLONOSCOPIA"> Colonoscopia</label>
+      <label><input type="checkbox" value="ENDOSCOPIA"> Endoscopia</label>
+      <label><input type="checkbox" value="ULTRASSON"> Ultrasson</label>
+      <label><input type="checkbox" value="ECOCARDIOGRAMA"> Ecocardiograma</label>
+      <label><input type="checkbox" value="ELETROCARDIOGRAMA"> Eletrocardiograma</label>
+      <label><input type="checkbox" value="RAIO X"> Raio X</label>
+      <label><input type="checkbox" value="RESSONÂNCIA"> Ressonância</label>
+      <label><input type="checkbox" value="OUTRO"> Outro</label>
+    </div>
+
+    <div id="sequenciaNumerica" style="display:none;">
+      <label>Sequência Inicial</label>
+      <input type="number" id="seqInicial" min="1">
+      <label>Sequência Final</label>
+      <input type="number" id="seqFinal" min="1">
+    </div>
+
+    <div id="datas" style="display:none;">
+      <label>Data Inicial</label>
+      <input type="date" id="dataInicial">
+      <label>Data Final</label>
+      <input type="date" id="dataFinal">
+    </div>
+
+    <label>Mês</label>
+    <input type="text" id="mes">
+
+    <label>Ano</label>
+    <input type="text" id="ano">
+
+    <label>Responsável pela Montagem</label>
+    <input type="text" id="responsavel">
+
+    <label>Tipo de Caixa</label>
+    <select id="tipoCaixa">
+      <option value="Cx. Box Azul">Cx. Box Azul</option>
+      <option value="Cx. Box 20Kg">Cx. Box 20Kg</option>
+    </select>
+
+    <label>Quantidade de Caixas</label>
+    <input type="number" id="qtdCaixas" min="1" value="1">
+
+    <label>Data de Retirada</label>
+    <input type="date" id="dataRetirada">
+    <label>Responsável Retirada</label>
+    <input type="text" id="responsavelRetirada">
+
+    <label>Observação</label>
+    <textarea id="observacao" rows="2"></textarea>
+
+    <button type="button" id="salvarBtn">Salvar</button>
+    <button type="button" id="exportPdf">Exportar PDF</button>
+
+    <div id="mensagem"></div>
+  </form>
+</div>
+
+<div class="records-section">
+  <h2>Registros Salvos</h2>
+  <div id="todosRegistros"></div>
+  <div id="contadorCaixas">Total de Caixas: 0</div>
+  <div id="contadorPorTipo">Azul: 0 | 20Kg: 0</div>
+</div>
+
+<script>
+const descricao = document.getElementById("descricao");
+const checkboxExames = document.getElementById("checkboxExames");
+const todosRegistros = document.getElementById("todosRegistros");
+const contadorCaixas = document.getElementById("contadorCaixas");
+const contadorPorTipo = document.getElementById("contadorPorTipo");
+const mensagem = document.getElementById("mensagem");
+
+let registros = JSON.parse(localStorage.getItem("registros") || "[]");
+
+function formatarData(data) {
+  if (!data) return "";
+  const [ano, mes, dia] = data.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
+function atualizarContadores() {
+  let total=0, azul=0, kg20=0;
+  registros.forEach(r=>{
+    total+=parseInt(r.qtdCaixas||0);
+    if(r.tipoCaixa==="Cx. Box Azul") azul+=parseInt(r.qtdCaixas||0);
+    if(r.tipoCaixa==="Cx. Box 20Kg") kg20+=parseInt(r.qtdCaixas||0);
+  });
+  contadorCaixas.textContent=`Total de Caixas: ${total}`;
+  contadorPorTipo.textContent=`Azul: ${azul} | 20Kg: ${kg20}`;
+}
+
+function atualizarLista() {
+  todosRegistros.innerHTML="";
+  if(registros.length===0){todosRegistros.innerHTML="<i>Nenhum registro lançado.</i>"; return;}
+  registros.forEach((r,i)=>{
+    const div=document.createElement("div");
+    div.className="registro-item";
+    div.innerHTML=`
+      <span>${r.descricao} | ${r.tipoExame || ""} | ${r.info || ""} | ${r.mes}/${r.ano} | ${r.responsavel} | ${r.tipoCaixa} (${r.qtdCaixas}) | ${r.dataRetirada || ""} | ${r.responsavelRetirada || ""} | ${r.observacao || ""}</span>
+      <div class="registro-actions">
+        <button onclick="editar(${i})">Editar</button>
+        <button onclick="excluir(${i})">Excluir</button>
+      </div>`;
+    todosRegistros.appendChild(div);
+  });
+  atualizarContadores();
+}
+
+descricao.addEventListener("change",()=>{
+  const valor = descricao.value;
+  if(valor==="PRONTUARIO"){
+    document.getElementById("sequenciaNumerica").style.display="block";
+    document.getElementById("datas").style.display="none";
+    checkboxExames.style.display="none";
+  } else if(["EXAMB","EXAMEXT","HDIA"].includes(valor)){
+    document.getElementById("sequenciaNumerica").style.display="none";
+    document.getElementById("datas").style.display="block";
+    checkboxExames.style.display="flex";
+  } else{
+    document.getElementById("sequenciaNumerica").style.display="none";
+    document.getElementById("datas").style.display="block";
+    checkboxExames.style.display="none";
+  }
+});
+
+document.getElementById("salvarBtn").addEventListener("click",()=>{
+  const selecionados = Array.from(checkboxExames.querySelectorAll("input:checked")).map(c=>c.value);
+  const registro={
+    descricao: descricao.options[descricao.selectedIndex].text,
+    tipoExame: selecionados.join(", "),
+    info: descricao.value==="PRONTUARIO"
+      ? `Seq: ${document.getElementById("seqInicial").value}-${document.getElementById("seqFinal").value}`
+      : `${formatarData(document.getElementById("dataInicial").value)} a ${formatarData(document.getElementById("dataFinal").value)}`,
+    mes: document.getElementById("mes").value,
+    ano: document.getElementById("ano").value,
+    responsavel: document.getElementById("responsavel").value,
+    tipoCaixa: document.getElementById("tipoCaixa").value,
+    qtdCaixas: document.getElementById("qtdCaixas").value,
+    dataRetirada: formatarData(document.getElementById("dataRetirada").value),
+    responsavelRetirada: document.getElementById("responsavelRetirada").value,
+    observacao: document.getElementById("observacao").value
+  };
+  registros.push(registro);
+  localStorage.setItem("registros", JSON.stringify(registros));
+  atualizarLista();
+  mensagem.textContent="✅ Registro salvo com sucesso!";
+  setTimeout(()=>mensagem.textContent="",3000);
+  document.getElementById("registroForm").reset();
+  checkboxExames.style.display="none";
+});
+
+function editar(i){
+  const r=registros[i];
+  descricao.value = r.descricao.includes("PRONTUÁRIO") ? "PRONTUARIO" : "";
+  document.getElementById("mes").value=r.mes;
+  document.getElementById("ano").value=r.ano;
+  document.getElementById("responsavel").value=r.responsavel;
+  document.getElementById("tipoCaixa").value=r.tipoCaixa;
+  document.getElementById("qtdCaixas").value=r.qtdCaixas;
+  document.getElementById("dataRetirada").value=r.dataRetirada.split("/").reverse().join("-");
+  document.getElementById("responsavelRetirada").value=r.responsavelRetirada;
+  document.getElementById("observacao").value=r.observacao;
+  registros.splice(i,1);
+  localStorage.setItem("registros",JSON.stringify(registros));
+  atualizarLista();
+}
+
+function excluir(i){
+  registros.splice(i,1);
+  localStorage.setItem("registros",JSON.stringify(registros));
+  atualizarLista();
+}
+
+document.getElementById("exportPdf").addEventListener("click",()=>{
+  if(registros.length===0){ alert("Nenhum registro para exportar!"); return;}
+
+  let dataInicio=prompt("Informe a Data Inicial do período (dd/mm/aaaa) ou deixe vazio para todos:");
+  let dataFim=prompt("Informe a Data Final do período (dd/mm/aaaa) ou deixe vazio para todos:");
+
+  const parseData=(d)=>{ if(!d) return null; const [dia,mes,ano]=d.split("/"); return new Date(`${ano}-${mes}-${dia}`); };
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"landscape" });
+
+  doc.text("Relatório de Registros de Exames",14,15);
+
+  let registrosFiltrados=registros;
+  if(dataInicio||dataFim){
+    const inicio=parseData(dataInicio)||new Date("1900-01-01");
+    const fim=parseData(dataFim)||new Date("2100-12-31");
+    registrosFiltrados=registros.filter(r=>{
+      const dataR=parseData(r.dataRetirada);
+      if(!dataR) return false;
+      return dataR>=inicio && dataR<=fim;
+    });
+  }
+
+  if(registrosFiltrados.length===0){ alert("Nenhum registro no período informado!"); return; }
+
+  doc.autoTable({
+    head:[["Descrição","Tipo de Exame","Informações","Mês/Ano","Responsável","Tipo Caixa","Qtde","Data Retirada","Resp. Retirada","Observação"]],
+    body:registrosFiltrados.map(r=>[
+      r.descricao,r.tipoExame,r.info,`${r.mes}/${r.ano}`,r.responsavel,r.tipoCaixa,r.qtdCaixas,r.dataRetirada,r.responsavelRetirada,r.observacao
+    ]),
+    startY:25,
+    styles:{ fontSize:9 },
+    headStyles:{ fillColor:[65,105,225] }
+  });
+
+  doc.save("registros_exames.pdf");
+});
+
+function atualizarRelogio(){
+  const now=new Date();
+  const d=`${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+  const h=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  document.getElementById("relogio").textContent=`Data: ${d} | Hora: ${h}`;
+}
+setInterval(atualizarRelogio,1000);
+
+atualizarLista();
+</script>
+</body>
+</html>
